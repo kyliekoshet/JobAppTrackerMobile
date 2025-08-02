@@ -8,6 +8,7 @@ import { View, ActivityIndicator } from 'react-native';
 // Import screens
 import DashboardScreen from '../screens/DashboardScreen';
 import ApplicationsScreen from '../screens/ApplicationsScreen';
+import AddApplicationScreen from '../screens/AddApplicationScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -19,6 +20,34 @@ import { RootStackParamList, MainTabParamList } from '../types';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// Applications Stack Navigator
+function ApplicationsStackNavigator() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#007AFF',
+        },
+        headerTintColor: 'white',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen 
+        name="ApplicationsList" 
+        component={ApplicationsScreen}
+        options={{ title: 'Applications' }}
+      />
+      <Stack.Screen 
+        name="AddApplication" 
+        component={AddApplicationScreen}
+        options={{ title: 'Add Application' }}
+      />
+    </Stack.Navigator>
+  );
+}
 
 // Main Tab Navigator
 function MainTabNavigator() {
@@ -76,7 +105,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen 
         name="Applications" 
-        component={ApplicationsScreen}
+        component={ApplicationsStackNavigator}
         options={{ title: 'Applications' }}
       />
       <Tab.Screen 

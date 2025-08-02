@@ -23,14 +23,17 @@ export interface JobApplicationCreate {
   company: string;
   location?: string;
   job_description?: string;
-  requirements?: string;
-  salary_range?: string;
-  job_type?: string;
-  application_date: string;
-  status: 'applied' | 'interviewing' | 'offered' | 'rejected' | 'withdrawn';
-  source?: string;
-  contact_info?: string;
+  salary?: string; // Changed from salary_range
+  job_url?: string; // Changed from source
+  date_applied: string; // Changed from application_date
+  date_job_posted?: string;
+  application_status: 'Applied' | 'Interviewing' | 'Offer' | 'Rejected' | 'Withdrawn' | 'Pending'; // Changed from status
+  interview_stage?: 'None' | 'Phone Screen' | 'Technical Interview' | 'Behavioral Interview' | 'System Design' | 'Coding Challenge' | 'Onsite' | 'Final Round';
   notes?: string;
+  referred_by?: string;
+  referral_relationship?: string;
+  referral_date?: string;
+  referral_notes?: string;
 }
 
 // Task Types
@@ -116,6 +119,8 @@ export type RootStackParamList = {
   EditTask: { id: number };
   AddEvent: undefined;
   EditEvent: { id: number };
+  ApplicationsList: undefined;
+  AddApplication: undefined;
 };
 
 export type MainTabParamList = {

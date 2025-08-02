@@ -83,9 +83,16 @@ export const jobApplicationsApi = {
   },
 
   enhanceDescription: async (jobDescription: string): Promise<any> => {
-    const response = await api.post('/job-applications/enhance-job-description', {
-      job_description: jobDescription,
+    console.log('🔍 API: Making scraping request with URL:', jobDescription);
+    console.log('🔍 API: Request payload:', { url: jobDescription });
+    
+    const response = await api.post('/job-applications/scrape-job', {
+      url: jobDescription,
+    }, {
+      timeout: 30000, // Increase timeout to 30 seconds for scraping
     });
+    
+    console.log('🔍 API: Response received:', response.data);
     return response.data;
   },
 };
