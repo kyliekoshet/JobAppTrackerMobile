@@ -9,6 +9,7 @@ import { View, ActivityIndicator } from 'react-native';
 import DashboardScreen from '../screens/DashboardScreen';
 import ApplicationsScreen from '../screens/ApplicationsScreen';
 import AddApplicationScreen from '../screens/AddApplicationScreen';
+import ApplicationDetailScreen from '../screens/ApplicationDetailScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -153,11 +154,37 @@ function AuthNavigator() {
         }}
       >
         {isAuthenticated ? (
-          <Stack.Screen 
-            name="MainTabs" 
-            component={MainTabNavigator}
-            options={{ headerShown: false }}
-          />
+          <>
+            <Stack.Screen 
+              name="MainTabs" 
+              component={MainTabNavigator}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="AddTask" 
+              component={TasksScreen}
+              options={{ 
+                title: 'Add Task',
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen 
+              name="AddApplication" 
+              component={AddApplicationScreen}
+              options={{ 
+                title: 'Add Application',
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen 
+              name="ApplicationDetail" 
+              component={ApplicationDetailScreen}
+              options={{ 
+                title: 'Application Details',
+                presentation: 'card'
+              }}
+            />
+          </>
         ) : (
           <Stack.Screen 
             name="Login" 

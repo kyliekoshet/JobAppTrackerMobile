@@ -8,12 +8,22 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { jobApplicationsApi, tasksApi } from '../services/api';
 import { SummaryStats, TaskSummary, Task } from '../types';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+type DashboardScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 export default function DashboardScreen() {
+  const navigation = useNavigation<DashboardScreenNavigationProp>();
   const [stats, setStats] = useState<SummaryStats | null>(null);
   const [taskSummary, setTaskSummary] = useState<TaskSummary | null>(null);
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
@@ -98,119 +108,174 @@ export default function DashboardScreen() {
     }
   };
 
+  const handleAddApplication = () => {
+    navigation.navigate('AddApplication');
+  };
+
+  const handleAddTask = () => {
+    navigation.navigate('AddTask');
+  };
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Loading dashboard...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      {/* Quick Stats */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Overview</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Ionicons name="briefcase" size={24} color="#007AFF" />
-            <Text style={styles.statNumber}>{stats?.total_applications || 0}</Text>
-            <Text style={styles.statLabel}>Total Applications</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="calendar" size={24} color="#FF9500" />
-            <Text style={styles.statNumber}>{stats?.interviews_scheduled || 0}</Text>
-            <Text style={styles.statLabel}>Interviews</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="checkmark-circle" size={24} color="#34C759" />
-            <Text style={styles.statNumber}>{taskSummary?.completed_tasks || 0}</Text>
-            <Text style={styles.statLabel}>Tasks Done</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="trending-up" size={24} color="#5856D6" />
-            <Text style={styles.statNumber}>{stats?.response_rate?.toFixed(1) || 0}%</Text>
-            <Text style={styles.statLabel}>Response Rate</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Job Tracker</Text>
+          <Text style={styles.headerSubtitle}>Track your progress</Text>
+        </View>
+
+        {/* Quick Stats */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Overview</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="briefcase" size={20} color="#007AFF" />
+              </View>
+              <Text style={styles.statNumber}>{stats?.total_applications || 0}</Text>
+              <Text style={styles.statLabel}>Applications</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="calendar" size={20} color="#FF9500" />
+              </View>
+              <Text style={styles.statNumber}>{stats?.interviews_scheduled || 0}</Text>
+              <Text style={styles.statLabel}>Interviews</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              </View>
+              <Text style={styles.statNumber}>{taskSummary?.completed_tasks || 0}</Text>
+              <Text style={styles.statLabel}>Tasks Done</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="trending-up" size={20} color="#5856D6" />
+              </View>
+              <Text style={styles.statNumber}>{stats?.response_rate?.toFixed(1) || 0}%</Text>
+              <Text style={styles.statLabel}>Response Rate</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Today's Tasks */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Today's Tasks</Text>
-        {todayTasks.length > 0 ? (
-          <View style={styles.tasksList}>
-            {todayTasks.map((task) => (
-              <TouchableOpacity
-                key={task.id}
-                style={[
-                  styles.taskItem,
-                  task.status === 'completed' && styles.taskItemCompleted
-                ]}
-                onPress={() => handleTaskToggle(task)}
-              >
-                <View style={styles.taskContent}>
-                  <View style={styles.taskHeader}>
-                    <View style={[
-                      styles.priorityDot,
-                      { backgroundColor: getPriorityColor(task.priority) }
-                    ]} />
-                    <Text style={[
-                      styles.taskTitle,
-                      task.status === 'completed' && styles.taskTitleCompleted
-                    ]}>
-                      {task.status === 'completed' ? '✅ ' : ''}{task.title}
-                    </Text>
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActions}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleAddApplication}
+              activeOpacity={0.7}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="add-circle" size={24} color="#007AFF" />
+              </View>
+              <Text style={styles.actionButtonText}>Add Application</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleAddTask}
+              activeOpacity={0.7}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="create" size={24} color="#FF9500" />
+              </View>
+              <Text style={styles.actionButtonText}>Add Task</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Today's Tasks */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Today's Tasks</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('AddTask')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          {todayTasks.length > 0 ? (
+            <View style={styles.tasksList}>
+              {todayTasks.map((task) => (
+                <TouchableOpacity
+                  key={task.id}
+                  style={[
+                    styles.taskItem,
+                    task.status === 'completed' && styles.taskItemCompleted
+                  ]}
+                  onPress={() => handleTaskToggle(task)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.taskContent}>
+                    <View style={styles.taskHeader}>
+                      <View style={[
+                        styles.priorityDot,
+                        { backgroundColor: getPriorityColor(task.priority) }
+                      ]} />
+                      <Text style={[
+                        styles.taskTitle,
+                        task.status === 'completed' && styles.taskTitleCompleted
+                      ]}>
+                        {task.status === 'completed' ? '✅ ' : ''}{task.title}
+                      </Text>
+                    </View>
+                    {task.due_date && (
+                      <Text style={[
+                        styles.taskDueDate,
+                        task.due_date < new Date().toISOString().split('T')[0] && 
+                        task.status !== 'completed' && styles.taskOverdue
+                      ]}>
+                        {task.due_date < new Date().toISOString().split('T')[0] && 
+                         task.status !== 'completed' ? '⚠️ Overdue: ' : 'Due: '}
+                        {new Date(task.due_date).toLocaleDateString()}
+                      </Text>
+                    )}
                   </View>
-                  {task.due_date && (
-                    <Text style={[
-                      styles.taskDueDate,
-                      task.due_date < new Date().toISOString().split('T')[0] && 
-                      task.status !== 'completed' && styles.taskOverdue
-                    ]}>
-                      {task.due_date < new Date().toISOString().split('T')[0] && 
-                       task.status !== 'completed' ? '⚠️ Overdue: ' : 'Due: '}
-                      {new Date(task.due_date).toLocaleDateString()}
-                    </Text>
-                  )}
-                </View>
-                <Ionicons 
-                  name={task.status === 'completed' ? 'checkmark-circle' : 'ellipse-outline'} 
-                  size={24} 
-                  color={task.status === 'completed' ? '#34C759' : '#8E8E93'} 
-                />
+                  <View style={styles.taskCheckbox}>
+                    <Ionicons 
+                      name={task.status === 'completed' ? 'checkmark-circle' : 'ellipse-outline'} 
+                      size={24} 
+                      color={task.status === 'completed' ? '#34C759' : '#8E8E93'} 
+                    />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="checkmark-done" size={48} color="#8E8E93" />
+              <Text style={styles.emptyStateText}>No tasks for today</Text>
+              <TouchableOpacity 
+                style={styles.emptyStateButton}
+                onPress={handleAddTask}
+              >
+                <Text style={styles.emptyStateButtonText}>Add Your First Task</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="checkmark-done" size={48} color="#8E8E93" />
-            <Text style={styles.emptyStateText}>No tasks for today</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="add-circle" size={24} color="#007AFF" />
-            <Text style={styles.actionButtonText}>Add Application</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="create" size={24} color="#FF9500" />
-            <Text style={styles.actionButtonText}>Add Task</Text>
-          </TouchableOpacity>
+            </View>
+          )}
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Bottom Spacing */}
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -218,6 +283,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -230,22 +301,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
   },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1D1D1F',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#8E8E93',
+  },
   section: {
-    margin: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1D1D1F',
-    marginBottom: 16,
+  },
+  seeAllText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -257,20 +354,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#F2F2F7',
-    borderRadius: 8,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  statIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1D1D1F',
-    marginTop: 8,
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
     color: '#8E8E93',
     textAlign: 'center',
-    marginTop: 4,
+    fontWeight: '500',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+    minHeight: 80,
+  },
+  actionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    color: '#1D1D1F',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   tasksList: {
     gap: 12,
@@ -278,9 +412,10 @@ const styles = StyleSheet.create({
   taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
     backgroundColor: '#F2F2F7',
-    borderRadius: 8,
+    borderRadius: 12,
+    minHeight: 60,
   },
   taskItemCompleted: {
     backgroundColor: '#E8F5E8',
@@ -319,6 +454,9 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontWeight: '500',
   },
+  taskCheckbox: {
+    marginLeft: 12,
+  },
   emptyState: {
     alignItems: 'center',
     padding: 32,
@@ -327,22 +465,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     marginTop: 8,
+    marginBottom: 16,
   },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  actionButton: {
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#F2F2F7',
+  emptyStateButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 8,
-    minWidth: 120,
   },
-  actionButtonText: {
+  emptyStateButtonText: {
+    color: 'white',
     fontSize: 14,
-    color: '#1D1D1F',
-    marginTop: 8,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  bottomSpacing: {
+    height: 20,
   },
 }); 

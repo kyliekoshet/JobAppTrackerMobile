@@ -113,6 +113,7 @@ export type RootStackParamList = {
   Login: undefined;
   MainTabs: undefined;
   JobApplicationDetail: { id: number };
+  ApplicationDetail: { applicationId: number };
   AddJobApplication: undefined;
   EditJobApplication: { id: number };
   AddTask: undefined;

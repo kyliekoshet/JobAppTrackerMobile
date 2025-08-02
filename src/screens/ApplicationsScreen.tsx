@@ -15,13 +15,13 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface JobApplication {
   id: number;
+  job_title: string;
   company: string;
-  position: string;
-  status: string;
+  application_status: string;
   location?: string;
   salary?: string;
+  date_applied: string;
   created_at: string;
-  application_date?: string;
 }
 
 export default function ApplicationsScreen({ navigation }: any) {
@@ -87,11 +87,14 @@ export default function ApplicationsScreen({ navigation }: any) {
   };
 
   const renderApplication = ({ item }: { item: JobApplication }) => (
-    <TouchableOpacity style={styles.applicationCard}>
+    <TouchableOpacity 
+      style={styles.applicationCard}
+      onPress={() => navigation.navigate('ApplicationDetail', { applicationId: item.id })}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.companyInfo}>
           <Text style={styles.company}>{item.company}</Text>
-          <Text style={styles.position}>{item.position}</Text>
+          <Text style={styles.position}>{item.job_title}</Text>
           {item.location && (
             <Text style={styles.location}>
               <Ionicons name="location-outline" size={12} color="#8E8E93" />
@@ -99,19 +102,19 @@ export default function ApplicationsScreen({ navigation }: any) {
             </Text>
           )}
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.application_status) }]}>
           <Ionicons 
-            name={getStatusIcon(item.status) as any} 
+            name={getStatusIcon(item.application_status) as any} 
             size={12} 
             color="white" 
           />
-          <Text style={styles.statusText}>{item.status}</Text>
+          <Text style={styles.statusText}>{item.application_status}</Text>
         </View>
       </View>
       
       <View style={styles.cardFooter}>
         <Text style={styles.date}>
-          Applied: {formatDate(item.application_date || item.created_at)}
+          Applied: {formatDate(item.date_applied || item.created_at)}
         </Text>
         {item.salary && (
           <Text style={styles.salary}>{item.salary}</Text>

@@ -95,6 +95,25 @@ export const jobApplicationsApi = {
     console.log('🔍 API: Response received:', response.data);
     return response.data;
   },
+
+  getWithFollowUps: async (id: number) => {
+    const response = await api.get(`/job-applications/${id}/with-follow-ups`);
+    return response.data;
+  },
+
+  addFollowUp: async (applicationId: number, followUpData: any) => {
+    const response = await api.post(`/follow-ups/job-applications/${applicationId}/follow-ups`, followUpData);
+    return response.data;
+  },
+
+  updateFollowUp: async (applicationId: number, followUpId: number, followUpData: any) => {
+    const response = await api.put(`/follow-ups/${followUpId}`, followUpData);
+    return response.data;
+  },
+
+  deleteFollowUp: async (applicationId: number, followUpId: number) => {
+    await api.delete(`/follow-ups/${followUpId}`);
+  },
 };
 
 // Tasks API
