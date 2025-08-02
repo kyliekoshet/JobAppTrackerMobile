@@ -14,29 +14,62 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginScreen() {
-  const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { signInWithEmail, signUpWithEmail } = useAuth();
 
-  const handleLogin = async () => {
-    if (!userId.trim()) {
-      Alert.alert('Error', 'Please enter a user ID');
+  const handleAuth = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
     try {
-      await login(userId.trim());
+      const { error } = isSignUp 
+        ? await signUpWithEmail(email.trim(), password)
+        : await signInWithEmail(email.trim(), password);
+
+      if (error) {
+        Alert.alert(
+          isSignUp ? 'Sign Up Failed' : 'Sign In Failed', 
+          error.message || 'Please try again'
+        );
+      } else if (isSignUp) {
+        Alert.alert(
+          'Success!', 
+          'Account created! Please check your email to verify your account, then sign in.'
+        );
+        setIsSignUp(false);
+      }
     } catch (error) {
-      console.error('Login failed:', error);
-      Alert.alert('Login Failed', 'Please try again');
+      console.error('Auth failed:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuickLogin = (demoUserId: string) => {
-    setUserId(demoUserId);
+  const handleDemoLogin = async () => {
+    setEmail('demo@jobtracker.com');
+    setPassword('demo123');
+    // Auto-login with demo credentials
+    setTimeout(() => {
+      handleAuth();
+    }, 100);
   };
 
   return (
@@ -52,63 +85,97 @@ export default function LoginScreen() {
           <Text style={styles.appSubtitle}>Track your job applications</Text>
         </View>
 
-        {/* Login Form */}
+        {/* Auth Form */}
         <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>Welcome Back</Text>
+          <Text style={styles.formTitle}>
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </Text>
           
+          {/* Email Input */}
           <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter your user ID"
-              value={userId}
-              onChangeText={setUserId}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
-              returnKeyType="done"
-              onSubmitEditing={handleLogin}
+              keyboardType="email-address"
+              returnKeyType="next"
             />
           </View>
 
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleAuth}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons 
+                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                size={20} 
+                color="#8E8E93" 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Auth Button */}
           <TouchableOpacity 
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
+            style={[styles.authButton, loading && styles.authButtonDisabled]}
+            onPress={handleAuth}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
               <>
-                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Text style={styles.authButtonText}>
+                  {isSignUp ? 'Create Account' : 'Sign In'}
+                </Text>
                 <Ionicons name="arrow-forward" size={20} color="white" />
               </>
             )}
           </TouchableOpacity>
 
-          {/* Quick Demo Options */}
+          {/* Toggle Sign Up/Sign In */}
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={() => setIsSignUp(!isSignUp)}
+          >
+            <Text style={styles.toggleText}>
+              {isSignUp 
+                ? 'Already have an account? Sign In' 
+                : "Don't have an account? Sign Up"
+              }
+            </Text>
+          </TouchableOpacity>
+
+          {/* Demo Access */}
           <View style={styles.demoContainer}>
             <Text style={styles.demoTitle}>Quick Demo Access:</Text>
-            <View style={styles.demoButtons}>
-              <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('demo-user-123')}
-              >
-                <Text style={styles.demoButtonText}>Demo User</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('job-seeker-456')}
-              >
-                <Text style={styles.demoButtonText}>Job Seeker</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.demoButton}
+              onPress={handleDemoLogin}
+            >
+              <Text style={styles.demoButtonText}>Try Demo Account</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            This is a demo app. In production, you'd use proper authentication.
+            Secure authentication powered by Supabase
           </Text>
         </View>
       </View>
@@ -164,7 +231,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     borderRadius: 12,
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 16,
     height: 50,
   },
   inputIcon: {
@@ -175,7 +242,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1D1D1F',
   },
-  loginButton: {
+  authButton: {
     backgroundColor: '#007AFF',
     borderRadius: 12,
     height: 50,
@@ -183,20 +250,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    marginTop: 8,
   },
-  loginButtonDisabled: {
+  authButtonDisabled: {
     backgroundColor: '#8E8E93',
   },
-  loginButtonText: {
+  authButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  toggleButton: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  toggleText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
   demoContainer: {
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
+    alignItems: 'center',
   },
   demoTitle: {
     fontSize: 14,
@@ -204,16 +282,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
-  demoButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
   demoButton: {
     backgroundColor: '#F2F2F7',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 8,
-    minWidth: 100,
     alignItems: 'center',
   },
   demoButtonText: {

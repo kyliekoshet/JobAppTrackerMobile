@@ -22,7 +22,10 @@ export default function ProfileScreen() {
       <View style={styles.profileHeader}>
         <Ionicons name="person-circle" size={80} color="#007AFF" />
         <Text style={styles.userName}>{user?.email || 'Demo User'}</Text>
-        <Text style={styles.userId}>ID: {user?.id}</Text>
+        <Text style={styles.userId}>User ID: {user?.id?.substring(0, 8)}...</Text>
+        <Text style={styles.authStatus}>
+          ✅ Authenticated with Supabase
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -62,6 +65,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     marginTop: 4,
+  },
+  authStatus: {
+    fontSize: 14,
+    color: '#4CAF50',
+    marginTop: 8,
+    fontWeight: 'bold',
   },
   section: {
     backgroundColor: 'white',

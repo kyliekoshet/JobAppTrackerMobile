@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
 import { JobApplication, JobApplicationCreate, Task, TaskCreate, CalendarEvent, SummaryStats, TaskSummary } from '../types';
 
 // API Configuration
@@ -15,16 +16,20 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add Supabase JWT token
 api.interceptors.request.use(
   async (config) => {
     try {
-      const userId = await AsyncStorage.getItem('user_id');
-      if (userId && config.headers) {
-        config.headers.Authorization = `Bearer ${userId}`;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id && config.headers) {
+        // Use the Supabase user ID as the Bearer token (matching web app)
+        config.headers.Authorization = `Bearer ${session.user.id}`;
+        console.log('🔑 API Request with user ID:', session.user.id.substring(0, 8) + '...');
+      } else {
+        console.log('❌ No Supabase session found for API request');
       }
     } catch (error) {
-      console.error('Error getting user ID from storage:', error);
+      console.error('Error getting Supabase session:', error);
     }
     return config;
   },
@@ -36,10 +41,11 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      AsyncStorage.removeItem('user_id');
+      // Handle unauthorized access - sign out user
+      console.log('Unauthorized access, signing out...');
+      await supabase.auth.signOut();
     }
     return Promise.reject(error);
   }
@@ -153,18 +159,21 @@ export const calendarEventsApi = {
   },
 };
 
-// Auth API
+// Auth API - Now handled by Supabase
 export const authApi = {
-  setUserId: async (userId: string): Promise<void> => {
-    await AsyncStorage.setItem('user_id', userId);
+  // Authentication now handled by Supabase AuthContext
+  getCurrentUser: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
   },
 
-  getUserId: async (): Promise<string | null> => {
-    return await AsyncStorage.getItem('user_id');
+  signOut: async () => {
+    await supabase.auth.signOut();
   },
 
-  clearAuth: async (): Promise<void> => {
-    await AsyncStorage.removeItem('user_id');
+  getSession: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
   },
 };
 

@@ -1,85 +1,89 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi } from '../services/api';
-import { User, AuthState } from '../types';
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { User } from '@supabase/supabase-js'
+import { supabase, signInWithEmail, signUpWithEmail, signOut, getCurrentUser, onAuthStateChange } from '../lib/supabase'
 
-interface AuthContextType extends AuthState {
-  login: (userId: string) => Promise<void>;
-  logout: () => Promise<void>;
+interface AuthContextType {
+  user: User | null
+  loading: boolean
+  isAuthenticated: boolean
+  isLoading: boolean
+  signInWithEmail: (email: string, password: string) => Promise<{ error: any }>
+  signUpWithEmail: (email: string, password: string) => Promise<{ error: any }>
+  signOut: () => Promise<{ error: any }>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
-};
+  return context
+}
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: React.ReactNode
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
+    // Get initial user
+    getCurrentUser().then(({ user }) => {
+      setUser(user)
+      setLoading(false)
+    })
 
-  const checkAuthStatus = async () => {
-    try {
-      // For demo purposes, let's always start with no user to show login screen
-      // In production, you'd check for a valid stored token/session
-      await authApi.clearAuth(); // Clear any existing auth for demo
-      const userId = await authApi.getUserId();
-      if (userId) {
-        setUser({ id: userId, email: `${userId}@demo.com` });
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-    } finally {
-      setIsLoading(false);
+    // Listen for auth changes
+    const { data: { subscription } } = onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleSignInWithEmail = async (email: string, password: string) => {
+    const { error } = await signInWithEmail(email, password)
+    if (error) {
+      console.error('Error signing in with email:', error)
     }
-  };
+    return { error }
+  }
 
-  const login = async (userId: string) => {
-    try {
-      await authApi.setUserId(userId);
-      setUser({ id: userId, email: `${userId}@demo.com` });
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+  const handleSignUpWithEmail = async (email: string, password: string) => {
+    const { error } = await signUpWithEmail(email, password)
+    if (error) {
+      console.error('Error signing up with email:', error)
     }
-  };
+    return { error }
+  }
 
-  const logout = async () => {
-    try {
-      await authApi.clearAuth();
-      setUser(null);
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
+  const handleSignOut = async () => {
+    const { error } = await signOut()
+    if (error) {
+      console.error('Error signing out:', error)
     }
-  };
+    return { error }
+  }
 
-  const value: AuthContextType = {
+  const value = {
     user,
-    isLoading,
-    isAuthenticated,
-    login,
-    logout,
-  };
+    loading,
+    isAuthenticated: !!user,
+    isLoading: loading,
+    signInWithEmail: handleSignInWithEmail,
+    signUpWithEmail: handleSignUpWithEmail,
+    signOut: handleSignOut
+  }
 
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
-  );
-}; 
+  )
+} 
